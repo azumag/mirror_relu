@@ -49,6 +49,9 @@ const CameraView = () => {
           if (posture.isMouthOpen) {
             audioAlertManager.playAlert('mouthOpen')
           }
+          if (posture.isStrabismusDetected) {
+            audioAlertManager.playAlert('strabismus')
+          }
         }
 
         // キャンバスに描画
@@ -205,6 +208,10 @@ const CameraView = () => {
               <span className="label">口の開き:</span>
               <span className="value">{postureData.mouthOpenness.toFixed(3)}</span>
             </div>
+            <div className="info-item">
+              <span className="label">目の向き:</span>
+              <span className="value">{postureData.eyeAlignment.toFixed(3)}</span>
+            </div>
 
             <div className="status-badges">
               <div className={`badge ${postureData.isSlouchingDetected ? 'warning' : 'success'}`}>
@@ -215,6 +222,9 @@ const CameraView = () => {
               </div>
               <div className={`badge ${postureData.isMouthOpen ? 'warning' : 'success'}`}>
                 {postureData.isMouthOpen ? '⚠ 口開き' : '✓ 口閉じ'}
+              </div>
+              <div className={`badge ${postureData.isStrabismusDetected ? 'warning' : 'success'}`}>
+                {postureData.isStrabismusDetected ? '⚠ 斜視疑い' : '✓ 目の向き正常'}
               </div>
             </div>
           </>

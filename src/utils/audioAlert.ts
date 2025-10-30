@@ -15,13 +15,13 @@ class AudioAlertManager {
     return now - lastTime >= this.alertInterval
   }
 
-  playAlert(alertType: string, volume: number = 0.8): void {
+  playAlert(alertType: string, volume: number = 0.8): boolean {
     if (!this.canPlayAlert(alertType)) {
-      return
+      return false
     }
 
     const message = this.messages[alertType]
-    if (!message) return
+    if (!message) return false
 
     // Web Speech API を使用
     if ('speechSynthesis' in window) {
@@ -41,6 +41,8 @@ class AudioAlertManager {
       console.log(`[Alert] ${alertType}: ${message}`)
       this.lastAlertTime.set(alertType, Date.now())
     }
+
+    return true
   }
 
   setAlertInterval(interval: number): void {

@@ -141,6 +141,89 @@
   color: #fdba74;
 }
 
+.log-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.log-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.log-count {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  font-family: 'Courier New', monospace;
+}
+
+.log-content {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem 1.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.log-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.log-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.log-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.log-item {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.9;
+}
+
+.log-item:last-child {
+  border-bottom: none;
+}
+
+.log-empty {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.5;
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .status-badges {
     flex-direction: column;
@@ -148,5 +231,10 @@
 
   .badge {
     min-width: auto;
+  }
+
+  .log-content {
+    max-height: 200px;
+    font-size: 0.85rem;
   }
 }

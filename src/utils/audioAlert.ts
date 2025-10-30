@@ -6,6 +6,7 @@ class AudioAlertManager {
     slouching: '猫背になっています。背筋を伸ばしましょう。',
     screenDistance: '画面に近づきすぎです。距離を取ってください。',
     mouthOpen: '口が開いています。',
+    strabismus: '目の向きが揃っていません。正面を見てください。',
   }
 
   canPlayAlert(alertType: string): boolean {

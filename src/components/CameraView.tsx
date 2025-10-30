@@ -15,6 +15,23 @@ const CameraView = () => {
   const [fps, setFps] = useState(0)
   const [isDetecting, setIsDetecting] = useState(false)
   const [calibrationDistance, setCalibrationDistance] = useState<number | null>(null)
+  const [showLog, setShowLog] = useState(false)
+  const [logs, setLogs] = useState<string[]>([])
+  const logEndRef = useRef<HTMLDivElement>(null)
+
+  // ログ追加関数
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false })
+    const logMessage = `[${timestamp}] ${message}`
+    setLogs(prev => [...prev.slice(-99), logMessage]) // 最新100件まで保持
+  }
+
+  // ログの自動スクロール
+  useEffect(() => {
+    if (showLog && logEndRef.current) {
+      logEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [logs, showLog])
 
   // 検出ループ
   useEffect(() => {
@@ -41,16 +58,24 @@ const CameraView = () => {
         // アラート判定
         if (isDetecting) {
           if (posture.isSlouchingDetected) {
-            audioAlertManager.playAlert('slouching')
+            if (audioAlertManager.playAlert('slouching')) {
+              addLog('🚨 アラート: 猫背を検出')
+            }
           }
           if (posture.isScreenTooClose) {
-            audioAlertManager.playAlert('screenDistance')
+            if (audioAlertManager.playAlert('screenDistance')) {
+              addLog('🚨 アラート: 画面に近すぎます')
+            }
           }
           if (posture.isMouthOpen) {
-            audioAlertManager.playAlert('mouthOpen')
+            if (audioAlertManager.playAlert('mouthOpen')) {
+              addLog('🚨 アラート: 口が開いています')
+            }
           }
           if (posture.isStrabismusDetected) {
-            audioAlertManager.playAlert('strabismus')
+            if (audioAlertManager.playAlert('strabismus')) {
+              addLog('🚨 アラート: 目の向きが揃っていません')
+            }
           }
         }
 
@@ -135,12 +160,28 @@ const CameraView = () => {
   const handleCalibrate = () => {
     if (postureData) {
       setCalibrationDistance(postureData.faceDistance)
+      addLog(`✅ キャリブレーション完了: 基準距離=${postureData.faceDistance.toFixed(3)}`)
       alert('キャリブレーション完了！現在の距離を基準として設定しました。')
     }
   }
 
   const toggleDetection = () => {
-    setIsDetecting(!isDetecting)
+    const newState = !isDetecting
+    setIsDetecting(newState)
+    if (newState) {
+      addLog('▶️ 検出を開始しました')
+    } else {
+      addLog('⏸️ 検出を停止しました')
+    }
+  }
+
+  const toggleLog = () => {
+    setShowLog(!showLog)
+  }
+
+  const clearLog = () => {
+    setLogs([])
+    addLog('🗑️ ログをクリアしました')
   }
 
   if (cameraError || mediapipeError) {
@@ -186,7 +227,36 @@ const CameraView = () => {
         <button onClick={handleCalibrate}>
           キャリブレーション
         </button>
+        <button onClick={toggleLog} className={showLog ? 'active' : ''}>
+          {showLog ? 'ログ非表示' : 'ログ表示'}
+        </button>
+        {showLog && (
+          <button onClick={clearLog}>
+            ログクリア
+          </button>
+        )}
       </div>
+
+      {showLog && (
+        <div className="log-panel">
+          <div className="log-header">
+            <h3>検出ログ</h3>
+            <span className="log-count">{logs.length}件</span>
+          </div>
+          <div className="log-content">
+            {logs.length === 0 ? (
+              <div className="log-empty">ログがありません</div>
+            ) : (
+              logs.map((log, index) => (
+                <div key={index} className="log-item">
+                  {log}
+                </div>
+              ))
+            )}
+            <div ref={logEndRef} />
+          </div>
+        </div>
+      )}
 
       <div className="info-panel">
         <div className="info-item">

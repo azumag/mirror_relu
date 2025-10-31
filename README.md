@@ -4,6 +4,8 @@
 
 ![Status](https://img.shields.io/badge/status-PoC-green)
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Test](https://github.com/azumag/mirror_relu/actions/workflows/test.yml/badge.svg)
+![PR Checks](https://github.com/azumag/mirror_relu/actions/workflows/pr-checks.yml/badge.svg)
 
 ## 📖 概要
 
@@ -85,6 +87,21 @@ npm run dev
 
 ブラウザで `http://localhost:3000` を開いてください。
 
+### テストの実行
+
+```bash
+# 全てのテストを実行
+npm test
+
+# テストをワンショットで実行
+npm run test:run
+
+# カバレッジレポートを生成
+npm run test:coverage
+```
+
+詳細は[テストガイド](./TEST_README.md)を参照してください。
+
 ### 使い方
 
 1. **カメラを起動**: 「カメラを起動」ボタンをクリック
@@ -107,6 +124,9 @@ npm run dev
 
 - [要件定義書](./REQUIREMENTS.md) - 詳細な機能要件、技術要件、開発計画
 - [アーキテクチャ設計書](./ARCHITECTURE.md) - システムアーキテクチャと技術詳細
+- [テストガイド](./TEST_README.md) - テストの実行方法とテストカバレッジ
+- [CI/CDセットアップ](./.github/WORKFLOW_SETUP.md) - GitHub Actionsワークフローの手動セットアップ手順
+- [CI/CD詳細](./.github/CI_CD_README.md) - ワークフローの詳細説明
 
 ## 🤝 コントリビューション
 

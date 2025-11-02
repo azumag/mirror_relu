@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { NormalizedLandmark } from '@mediapipe/tasks-vision'
 import { useCamera } from '../hooks/useCamera'
 import { useMediaPipe } from '../hooks/useMediaPipe'
 import { analyzePosture, PostureResult } from '../utils/postureDetection'
@@ -32,6 +33,58 @@ const CameraView = () => {
       logEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [logs, showLog])
+
+  // ランドマーク描画関数
+  const drawLandmarks = useCallback((landmarks: NormalizedLandmark[]) => {
+    if (!canvasRef.current || !videoRef.current) return
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // キャンバスサイズを動画に合わせる
+    canvas.width = videoRef.current.videoWidth
+    canvas.height = videoRef.current.videoHeight
+
+    // クリア
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // 主要なランドマークを描画
+    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)'
+
+    // いくつかの重要なポイントのみ描画（全478点は多すぎるため）
+    const keyPoints = [1, 10, 152, 33, 263, 13, 14] // 鼻、額、顎、目、口
+
+    keyPoints.forEach(index => {
+      const landmark = landmarks[index]
+      if (landmark) {
+        const x = landmark.x * canvas.width
+        const y = landmark.y * canvas.height
+
+        ctx.beginPath()
+        ctx.arc(x, y, 5, 0, 2 * Math.PI)
+        ctx.fill()
+      }
+    })
+
+    // 姿勢状態を表示
+    if (postureData) {
+      ctx.font = '16px Arial'
+      ctx.fillStyle = postureData.isSlouchingDetected ? 'red' : 'green'
+      ctx.fillText(
+        `姿勢: ${postureData.isSlouchingDetected ? '悪い' : '良好'}`,
+        10,
+        30
+      )
+
+      ctx.fillStyle = postureData.isScreenTooClose ? 'red' : 'green'
+      ctx.fillText(
+        `距離: ${postureData.isScreenTooClose ? '近すぎ' : '適正'}`,
+        10,
+        55
+      )
+    }
+  }, [postureData, videoRef])
 
   // 検出ループ
   useEffect(() => {
@@ -104,58 +157,8 @@ const CameraView = () => {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [detectFace, cameraLoading, mediapipeLoading, isDetecting, calibrationDistance])
+  }, [detectFace, cameraLoading, mediapipeLoading, isDetecting, calibrationDistance, drawLandmarks, videoRef])
 
-  const drawLandmarks = (landmarks: any) => {
-    if (!canvasRef.current || !videoRef.current) return
-
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // キャンバスサイズを動画に合わせる
-    canvas.width = videoRef.current.videoWidth
-    canvas.height = videoRef.current.videoHeight
-
-    // クリア
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // 主要なランドマークを描画
-    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)'
-
-    // いくつかの重要なポイントのみ描画（全478点は多すぎるため）
-    const keyPoints = [1, 10, 152, 33, 263, 13, 14] // 鼻、額、顎、目、口
-
-    keyPoints.forEach(index => {
-      const landmark = landmarks[index]
-      if (landmark) {
-        const x = landmark.x * canvas.width
-        const y = landmark.y * canvas.height
-
-        ctx.beginPath()
-        ctx.arc(x, y, 5, 0, 2 * Math.PI)
-        ctx.fill()
-      }
-    })
-
-    // 姿勢状態を表示
-    if (postureData) {
-      ctx.font = '16px Arial'
-      ctx.fillStyle = postureData.isSlouchingDetected ? 'red' : 'green'
-      ctx.fillText(
-        `姿勢: ${postureData.isSlouchingDetected ? '悪い' : '良好'}`,
-        10,
-        30
-      )
-
-      ctx.fillStyle = postureData.isScreenTooClose ? 'red' : 'green'
-      ctx.fillText(
-        `距離: ${postureData.isScreenTooClose ? '近すぎ' : '適正'}`,
-        10,
-        55
-      )
-    }
-  }
 
   const handleCalibrate = () => {
     if (postureData) {

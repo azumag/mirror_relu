@@ -22,7 +22,6 @@ vi.mock('../utils/audioAlert', () => ({
 
 import { useCamera } from '../hooks/useCamera'
 import { useMediaPipe } from '../hooks/useMediaPipe'
-import { audioAlertManager } from '../utils/audioAlert'
 
 describe('CameraView', () => {
   let mockVideoElement: HTMLVideoElement
@@ -30,8 +29,8 @@ describe('CameraView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockVideoElement = document.createElement('video')
-    mockVideoElement.videoWidth = 640
-    mockVideoElement.videoHeight = 480
+    Object.defineProperty(mockVideoElement, 'videoWidth', { value: 640, writable: true })
+    Object.defineProperty(mockVideoElement, 'videoHeight', { value: 480, writable: true })
   })
 
   afterEach(() => {
@@ -137,7 +136,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,
@@ -163,7 +167,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,
@@ -191,7 +200,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,
@@ -210,7 +224,7 @@ describe('CameraView', () => {
 
   it('should show calibration alert when calibrate button is clicked with posture data', async () => {
     const user = userEvent.setup()
-    const mockAlert = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    vi.spyOn(window, 'alert').mockImplementation(() => {})
 
     // Create complete face landmarks (478 landmarks as required by MediaPipe)
     const createLandmark = (x: number, y: number, z: number = 0) => ({ x, y, z, visibility: 1 })
@@ -243,7 +257,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,
@@ -277,7 +296,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,
@@ -313,7 +337,12 @@ describe('CameraView', () => {
     })
 
     vi.mocked(useMediaPipe).mockReturnValue({
-      faceLandmarker: {},
+      faceLandmarker: {
+        setOptions: vi.fn(),
+        detect: vi.fn(),
+        detectForVideo: vi.fn(),
+        close: vi.fn()
+      },
       isLoading: false,
       error: null,
       detectFace: mockDetectFace,

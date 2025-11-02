@@ -1,4 +1,26 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
+
+// Mock SpeechSynthesisUtterance
+global.SpeechSynthesisUtterance = class SpeechSynthesisUtterance {
+  text = ''
+  lang = ''
+  volume = 1
+  rate = 1
+  pitch = 1
+  voice: any = null
+  onstart: any = null
+  onend: any = null
+  onerror: any = null
+  onpause: any = null
+  onresume: any = null
+  onmark: any = null
+  onboundary: any = null
+
+  constructor(text?: string) {
+    this.text = text || ''
+  }
+} as any
 
 // Mock Web Speech API
 global.speechSynthesis = {
@@ -33,3 +55,6 @@ if (!global.performance.now) {
     return mockTime
   })
 }
+
+// Mock window.alert
+global.alert = vi.fn()

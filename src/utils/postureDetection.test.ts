@@ -32,19 +32,22 @@ describe('postureDetection', () => {
       landmarks[33] = createLandmark(0.4, 0.4, 0)   // left eye
       landmarks[263] = createLandmark(0.6, 0.4, 0)  // right eye
       landmarks[13] = createLandmark(0.5, 0.6, 0)   // upper lip
-      landmarks[14] = createLandmark(0.5, 0.62, 0)  // lower lip
-
-      // Set up iris landmarks (normal alignment)
-      for (let i = 468; i <= 472; i++) {
-        landmarks[i] = createLandmark(0.4, 0.4, 0)
-      }
-      for (let i = 473; i <= 477; i++) {
-        landmarks[i] = createLandmark(0.6, 0.4, 0)
-      }
+      landmarks[14] = createLandmark(0.5, 0.605, 0) // lower lip (smaller gap < 0.02)
 
       // Eye corner landmarks
       landmarks[133] = createLandmark(0.35, 0.4, 0)  // left eye inner
       landmarks[362] = createLandmark(0.65, 0.4, 0)  // right eye inner
+
+      // Set up iris landmarks (normal alignment)
+      // Iris should be centered in each eye
+      const leftEyeCenterX = (0.35 + 0.4) / 2  // 0.375
+      const rightEyeCenterX = (0.65 + 0.6) / 2  // 0.625
+      for (let i = 468; i <= 472; i++) {
+        landmarks[i] = createLandmark(leftEyeCenterX, 0.4, 0)
+      }
+      for (let i = 473; i <= 477; i++) {
+        landmarks[i] = createLandmark(rightEyeCenterX, 0.4, 0)
+      }
 
       const result: PostureResult = analyzePosture(landmarks, 0.2)
 
@@ -57,14 +60,15 @@ describe('postureDetection', () => {
     it('should detect slouching when neck angle is less than 155 degrees', () => {
       const landmarks = createMockLandmarks()
 
-      // Set up slouching posture (smaller angle)
-      landmarks[1] = createLandmark(0.5, 0.5, 0)
-      landmarks[10] = createLandmark(0.5, 0.35, 0)
-      landmarks[152] = createLandmark(0.5, 0.65, 0)
+      // Set up slouching posture (smaller angle in X-Y plane)
+      // To create a smaller angle, move the nose sideways to create a bent head posture
+      landmarks[1] = createLandmark(0.55, 0.5, 0)    // nose moved right (slouching forward)
+      landmarks[10] = createLandmark(0.5, 0.35, 0)   // forehead
+      landmarks[152] = createLandmark(0.5, 0.65, 0)  // chin
       landmarks[33] = createLandmark(0.4, 0.4, 0)
       landmarks[263] = createLandmark(0.6, 0.4, 0)
       landmarks[13] = createLandmark(0.5, 0.6, 0)
-      landmarks[14] = createLandmark(0.5, 0.61, 0)
+      landmarks[14] = createLandmark(0.5, 0.605, 0)  // mouth closed
 
       // Setup iris and eye corners
       for (let i = 468; i <= 472; i++) landmarks[i] = createLandmark(0.4, 0.4, 0)

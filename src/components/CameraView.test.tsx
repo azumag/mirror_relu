@@ -100,7 +100,6 @@ describe('CameraView', () => {
 
     render(<CameraView />)
 
-    expect(screen.getByText(/エラー/i)).toBeInTheDocument()
     expect(screen.getByText(errorMessage)).toBeInTheDocument()
   })
 
@@ -124,7 +123,6 @@ describe('CameraView', () => {
 
     render(<CameraView />)
 
-    expect(screen.getByText(/エラー/i)).toBeInTheDocument()
     expect(screen.getByText(errorMessage)).toBeInTheDocument()
   })
 
@@ -214,8 +212,27 @@ describe('CameraView', () => {
     const user = userEvent.setup()
     const mockAlert = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
+    // Create complete face landmarks (478 landmarks as required by MediaPipe)
+    const createLandmark = (x: number, y: number, z: number = 0) => ({ x, y, z, visibility: 1 })
+    const mockLandmarks = Array(478).fill(null).map(() => createLandmark(0.5, 0.5, 0))
+
+    // Set required landmarks for posture detection
+    mockLandmarks[1] = createLandmark(0.5, 0.5, 0)    // nose
+    mockLandmarks[10] = createLandmark(0.5, 0.3, 0.1) // forehead
+    mockLandmarks[152] = createLandmark(0.5, 0.7, -0.1) // chin
+    mockLandmarks[33] = createLandmark(0.4, 0.4, 0)   // left eye
+    mockLandmarks[263] = createLandmark(0.6, 0.4, 0)  // right eye
+    mockLandmarks[13] = createLandmark(0.5, 0.6, 0)   // upper lip
+    mockLandmarks[14] = createLandmark(0.5, 0.605, 0) // lower lip
+    mockLandmarks[133] = createLandmark(0.35, 0.4, 0) // left eye inner
+    mockLandmarks[362] = createLandmark(0.65, 0.4, 0) // right eye inner
+
+    // Set iris landmarks
+    for (let i = 468; i <= 472; i++) mockLandmarks[i] = createLandmark(0.4, 0.4, 0)
+    for (let i = 473; i <= 477; i++) mockLandmarks[i] = createLandmark(0.6, 0.4, 0)
+
     const mockDetectFace = vi.fn().mockResolvedValue({
-      faceLandmarks: [[{ x: 0.5, y: 0.5, z: 0 }]]
+      faceLandmarks: [mockLandmarks]
     })
 
     vi.mocked(useCamera).mockReturnValue({

@@ -9,6 +9,7 @@ export const useMediaPipe = (videoElement: HTMLVideoElement | null) => {
 
   useEffect(() => {
     let mounted = true
+    let landmarkerInstance: FaceLandmarker | null = null
 
     const initializeMediaPipe = async () => {
       try {
@@ -37,6 +38,7 @@ export const useMediaPipe = (videoElement: HTMLVideoElement | null) => {
           return
         }
 
+        landmarkerInstance = landmarker
         console.log('MediaPipe initialized successfully')
         setFaceLandmarker(landmarker)
         setIsLoading(false)
@@ -53,8 +55,8 @@ export const useMediaPipe = (videoElement: HTMLVideoElement | null) => {
 
     return () => {
       mounted = false
-      if (faceLandmarker) {
-        faceLandmarker.close()
+      if (landmarkerInstance) {
+        landmarkerInstance.close()
       }
     }
   }, [])

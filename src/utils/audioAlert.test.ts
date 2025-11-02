@@ -6,6 +6,8 @@ describe('AudioAlertManager', () => {
     // Reset the alert manager state before each test
     vi.clearAllMocks()
     vi.useFakeTimers()
+    // Clear the lastAlertTime map to reset state between tests
+    ;(audioAlertManager as any).lastAlertTime.clear()
   })
 
   afterEach(() => {
@@ -101,10 +103,12 @@ describe('AudioAlertManager', () => {
         { type: 'strabismus', message: '目の向きが揃っていません。正面を見てください。' }
       ]
 
-      alertTypes.forEach(({ type, message }) => {
+      alertTypes.forEach(({ type, message }, index) => {
+        if (index > 0) {
+          vi.advanceTimersByTime(6000) // Reset interval between alerts
+        }
         vi.clearAllMocks()
         audioAlertManager.playAlert(type)
-        vi.advanceTimersByTime(6000) // Reset interval
 
         const speakCall = vi.mocked(global.speechSynthesis.speak).mock.calls[0][0]
         expect(speakCall.text).toBe(message)
@@ -140,6 +144,9 @@ describe('AudioAlertManager', () => {
 
   describe('fallback behavior', () => {
     it('should handle missing speechSynthesis gracefully', () => {
+      // Create a fresh manager instance to avoid interference from previous tests
+      const freshManager = new (audioAlertManager.constructor as any)()
+
       const originalSpeechSynthesis = global.speechSynthesis
 
       // Remove speechSynthesis
@@ -148,7 +155,7 @@ describe('AudioAlertManager', () => {
       const consoleLogSpy = vi.spyOn(console, 'log')
       const consoleWarnSpy = vi.spyOn(console, 'warn')
 
-      const result = audioAlertManager.playAlert('slouching')
+      const result = freshManager.playAlert('slouching')
 
       expect(result).toBe(true)
       expect(consoleWarnSpy).toHaveBeenCalledWith('Web Speech API is not supported in this browser')
@@ -156,6 +163,8 @@ describe('AudioAlertManager', () => {
 
       // Restore
       global.speechSynthesis = originalSpeechSynthesis
+      consoleLogSpy.mockRestore()
+      consoleWarnSpy.mockRestore()
     })
   })
 })

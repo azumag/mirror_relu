@@ -3,16 +3,17 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { useMediaPipe } from './useMediaPipe'
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision'
 
+// Mock factory function
+const createMockFaceLandmarker = () => ({
+  close: vi.fn(),
+  detectForVideo: vi.fn()
+})
+
 // Mock MediaPipe modules
 vi.mock('@mediapipe/tasks-vision', () => {
-  const mockFaceLandmarker = {
-    close: vi.fn(),
-    detectForVideo: vi.fn()
-  }
-
   return {
     FaceLandmarker: {
-      createFromOptions: vi.fn(() => Promise.resolve(mockFaceLandmarker))
+      createFromOptions: vi.fn()
     },
     FilesetResolver: {
       forVisionTasks: vi.fn(() => Promise.resolve({}))
@@ -28,6 +29,11 @@ describe('useMediaPipe', () => {
     mockVideoElement = document.createElement('video')
     mockVideoElement.width = 640
     mockVideoElement.height = 480
+
+    // Reset mock to return new instance for each test
+    vi.mocked(FaceLandmarker.createFromOptions).mockImplementation(() =>
+      Promise.resolve(createMockFaceLandmarker() as any)
+    )
   })
 
   afterEach(() => {
@@ -169,20 +175,29 @@ describe('useMediaPipe', () => {
         ]
       }
 
+      // Setup mock to return result before rendering hook
+      const mockDetectForVideo = vi.fn().mockReturnValue(mockResult)
+      vi.mocked(FaceLandmarker.createFromOptions).mockResolvedValueOnce({
+        close: vi.fn(),
+        detectForVideo: mockDetectForVideo
+      } as any)
+
       const { result } = renderHook(() => useMediaPipe(mockVideoElement))
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false)
+        expect(result.current.faceLandmarker).toBeTruthy()
       })
-
-      if (result.current.faceLandmarker) {
-        vi.mocked(result.current.faceLandmarker.detectForVideo).mockReturnValueOnce(mockResult as any)
-      }
 
       const detectionResult = await result.current.detectFace()
 
+      expect(mockDetectForVideo).toHaveBeenCalled()
       expect(detectionResult).toEqual(mockResult)
-      expect(result.current.lastResult).toEqual(mockResult)
+
+      // Wait for lastResult to be updated
+      await waitFor(() => {
+        expect(result.current.lastResult).toEqual(mockResult)
+      })
     })
 
     it('should handle detection errors gracefully', async () => {

@@ -26,6 +26,9 @@ export interface HandStatus {
 }
 
 export interface MonitorSettings {
+  // 表示設定
+  previewEnabled: boolean
+
   // 検出項目の有効/無効
   shoulderTiltEnabled: boolean
   headForwardEnabled: boolean
@@ -55,6 +58,9 @@ export interface MonitorSettings {
 }
 
 export const DEFAULT_SETTINGS: MonitorSettings = {
+  // 表示設定
+  previewEnabled: true,
+
   // デフォルトで有効な検出項目
   shoulderTiltEnabled: true,
   headForwardEnabled: false,  // 一旦無効

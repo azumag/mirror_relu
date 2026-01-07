@@ -212,12 +212,14 @@ function App() {
         {/* カメラビュー */}
         <div className="flex-1 relative">
           {selectedDeviceId ? (
-            <Camera
-              ref={cameraRef}
-              selectedDeviceId={selectedDeviceId}
-              onReady={handleCameraReady}
-              onError={handleCameraError}
-            />
+            <div className={settings.previewEnabled ? '' : 'invisible'}>
+              <Camera
+                ref={cameraRef}
+                selectedDeviceId={selectedDeviceId}
+                onReady={handleCameraReady}
+                onError={handleCameraError}
+              />
+            </div>
           ) : (
             <div className="flex items-center justify-center w-full h-full bg-gray-900">
               <div className="text-center p-8">

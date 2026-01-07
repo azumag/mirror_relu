@@ -30,6 +30,22 @@ export function Settings({ settings, onSettingsChange, isOpen, onClose }: Settin
           </button>
         </div>
 
+        {/* 表示設定 */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-400 mb-3">表示</h3>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between">
+              <span className="text-sm">カメラプレビュー</span>
+              <input
+                type="checkbox"
+                checked={settings.previewEnabled}
+                onChange={(e) => updateSetting('previewEnabled', e.target.checked)}
+                className="w-5 h-5"
+              />
+            </label>
+          </div>
+        </div>
+
         {/* アラート設定 */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-gray-400 mb-3">アラート</h3>

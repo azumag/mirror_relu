@@ -20,7 +20,15 @@ export class SoundAlert {
 
   async playBeep(level: AlertLevel): Promise<void> {
     if (!this.enabled) return
+    if (level === 'good') return // goodの場合は音を鳴らさない
 
+    // Electron環境ではメインプロセス経由で再生（仮想デスクトップ切り替え時も動作）
+    if (window.electronAPI) {
+      await window.electronAPI.playBeep(level)
+      return
+    }
+
+    // ブラウザ環境ではWeb Audio APIを使用
     this.initAudioContext()
     if (!this.audioContext) return
 
@@ -40,8 +48,6 @@ export class SoundAlert {
         oscillator.frequency.value = 880 // A5
         gainNode.gain.value = 0.5
         break
-      default:
-        return // goodの場合は音を鳴らさない
     }
 
     oscillator.type = 'sine'
@@ -59,6 +65,13 @@ export class SoundAlert {
   async speak(message: string): Promise<void> {
     if (!this.enabled) return
 
+    // Electron環境ではメインプロセス経由で読み上げ（仮想デスクトップ切り替え時も動作）
+    if (window.electronAPI) {
+      await window.electronAPI.speak(message)
+      return
+    }
+
+    // ブラウザ環境ではWeb Speech APIを使用
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(message)
       utterance.lang = 'ja-JP'

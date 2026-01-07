@@ -6,6 +6,8 @@ interface ElectronAPI {
   showNotification: (title: string, body: string) => Promise<void>
   updateOverlay: (status: { type: string; message: string; level: 'good' | 'warning' | 'danger' }) => Promise<void>
   toggleOverlay: (visible: boolean) => Promise<void>
+  playBeep: (level: 'warning' | 'danger') => Promise<void>
+  speak: (message: string) => Promise<void>
   onStatusUpdate: (callback: (status: { type: string; message: string; level: 'good' | 'warning' | 'danger' }) => void) => void
   getCameraAccessStatus: () => Promise<CameraAccessStatus>
   requestCameraAccess: () => Promise<boolean>

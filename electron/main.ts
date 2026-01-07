@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Notification, screen, systemPreferences, shell } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { exec } from 'child_process'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -77,6 +78,10 @@ function createOverlayWindow() {
     }
   })
 
+  // 全ての仮想デスクトップで表示（macOS）
+  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  overlayWindow.setAlwaysOnTop(true, 'floating', 1)
+
   overlayWindow.setIgnoreMouseEvents(true, { forward: true })
 
   if (VITE_DEV_SERVER_URL) {
@@ -96,6 +101,33 @@ function createOverlayWindow() {
 ipcMain.handle('show-notification', (_event, title: string, body: string) => {
   if (Notification.isSupported()) {
     new Notification({ title, body }).show()
+  }
+})
+
+// メインプロセスで音声を再生（仮想デスクトップ切り替え時も動作）
+ipcMain.handle('play-beep', (_event, level: 'warning' | 'danger') => {
+  if (process.platform === 'darwin') {
+    // macOSのシステムサウンドを使用
+    const sound = level === 'danger' ? 'Basso' : 'Tink'
+    exec(`afplay /System/Library/Sounds/${sound}.aiff`)
+  } else if (process.platform === 'win32') {
+    // WindowsのPowerShellでビープ音
+    const freq = level === 'danger' ? 880 : 440
+    exec(`powershell -c "[console]::beep(${freq}, 200)"`)
+  } else {
+    shell.beep()
+  }
+})
+
+// メインプロセスで音声読み上げ（仮想デスクトップ切り替え時も動作）
+ipcMain.handle('speak', (_event, message: string) => {
+  const escaped = message.replace(/"/g, '\\"')
+  if (process.platform === 'darwin') {
+    // macOSのsayコマンドを使用
+    exec(`say -v Kyoko "${escaped}"`)
+  } else if (process.platform === 'win32') {
+    // WindowsのSAPIを使用
+    exec(`powershell -c "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('${escaped.replace(/'/g, "''")}')"`)
   }
 })
 

@@ -67,7 +67,7 @@ export const DEFAULT_SETTINGS: MonitorSettings = {
   shoulderTiltThreshold: 10,
   headForwardThreshold: 0.3,
   mouthOpenThreshold: 0.3,
-  gazeDeviationThreshold: 0.1,
+  gazeDeviationThreshold: 0.20,
   jawTensionThreshold: 0.6,
   handFaceDistanceThreshold: 0.15,
   alertCooldown: 5000,

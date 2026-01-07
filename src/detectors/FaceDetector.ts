@@ -88,42 +88,31 @@ export class FaceDetector {
       const eyeLookInLeft = blendshapes.find(b => b.categoryName === 'eyeLookInLeft')?.score || 0
       const eyeLookInRight = blendshapes.find(b => b.categoryName === 'eyeLookInRight')?.score || 0
 
-      // 正常な協調運動: 左を見る時は左目が外、右目が内 / 右を見る時は逆
-      // 斜視: この協調が崩れている
+      // シンプルな斜視検出ロジック:
+      // 正常時: 全ての値が低い（0.1以下）
+      // 斜視時: 一つ以上の値が高い（0.3以上）
 
-      // 片目の外斜視: 片目が外を向いているが、もう一方が対応して内を向いていない
-      const leftExotropia = Math.max(0, eyeLookOutLeft - eyeLookInRight)
-      const rightExotropia = Math.max(0, eyeLookOutRight - eyeLookInLeft)
+      // 最大の視線移動量を取得
+      const maxGaze = Math.max(eyeLookOutLeft, eyeLookOutRight, eyeLookInLeft, eyeLookInRight)
 
-      // 片目の内斜視: 片目が内を向いているが、もう一方が対応して外を向いていない
-      const leftEsotropia = Math.max(0, eyeLookInLeft - eyeLookOutRight)
-      const rightEsotropia = Math.max(0, eyeLookInRight - eyeLookOutLeft)
+      // 協調運動スコア（両目が同じ方向を向いている度合い）
+      const lookingLeftScore = Math.min(eyeLookOutLeft, eyeLookInRight)
+      const lookingRightScore = Math.min(eyeLookInLeft, eyeLookOutRight)
+      const coordinatedScore = Math.max(lookingLeftScore, lookingRightScore)
 
-      // 両目の外斜視/内斜視
-      const divergentStrabismus = Math.min(eyeLookOutLeft, eyeLookOutRight)
-      const convergentStrabismus = Math.min(eyeLookInLeft, eyeLookInRight)
+      // 斜視スコア: 最大移動量から協調分を軽く差し引く（0.3倍のみ）
+      eyeGazeDeviation = Math.max(0, maxGaze - coordinatedScore * 0.3)
 
-      eyeGazeDeviation = Math.max(
-        leftExotropia,
-        rightExotropia,
-        leftEsotropia,
-        rightEsotropia,
-        divergentStrabismus,
-        convergentStrabismus
-      )
-
-      // デバッグ出力（開発時のみ）
-      if (eyeGazeDeviation > 0.05) {
-        console.log('Eye tracking:', {
-          outLeft: eyeLookOutLeft.toFixed(3),
-          outRight: eyeLookOutRight.toFixed(3),
-          inLeft: eyeLookInLeft.toFixed(3),
-          inRight: eyeLookInRight.toFixed(3),
-          leftExo: leftExotropia.toFixed(3),
-          rightExo: rightExotropia.toFixed(3),
-          leftEso: leftEsotropia.toFixed(3),
-          rightEso: rightEsotropia.toFixed(3),
-          result: eyeGazeDeviation.toFixed(3)
+      // デバッグ出力
+      if (Math.random() < 0.03) {
+        console.log('Eye:', {
+          outL: eyeLookOutLeft.toFixed(2),
+          outR: eyeLookOutRight.toFixed(2),
+          inL: eyeLookInLeft.toFixed(2),
+          inR: eyeLookInRight.toFixed(2),
+          maxGaze: maxGaze.toFixed(2),
+          coord: coordinatedScore.toFixed(2),
+          result: eyeGazeDeviation.toFixed(2)
         })
       }
     }

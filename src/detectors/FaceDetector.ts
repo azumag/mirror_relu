@@ -88,9 +88,9 @@ export class FaceDetector {
       const eyeLookInLeft = blendshapes.find(b => b.categoryName === 'eyeLookInLeft')?.score || 0
       const eyeLookInRight = blendshapes.find(b => b.categoryName === 'eyeLookInRight')?.score || 0
 
-      // シンプルな斜視検出ロジック:
-      // 正常時: 全ての値が低い（0.1以下）
-      // 斜視時: 一つ以上の値が高い（0.3以上）
+      // 斜視検出ロジック:
+      // 正常な協調運動: 左を見る→outL+inR / 右を見る→inL+outR
+      // 斜視: 協調していない（片目だけずれている）
 
       // 最大の視線移動量を取得
       const maxGaze = Math.max(eyeLookOutLeft, eyeLookOutRight, eyeLookInLeft, eyeLookInRight)
@@ -100,8 +100,8 @@ export class FaceDetector {
       const lookingRightScore = Math.min(eyeLookInLeft, eyeLookOutRight)
       const coordinatedScore = Math.max(lookingLeftScore, lookingRightScore)
 
-      // 斜視スコア: 最大移動量から協調分を軽く差し引く（0.3倍のみ）
-      eyeGazeDeviation = Math.max(0, maxGaze - coordinatedScore * 0.3)
+      // 斜視スコア: 最大移動量と協調スコアの差（非協調度）
+      eyeGazeDeviation = Math.max(0, maxGaze - coordinatedScore)
 
       // デバッグ出力
       if (Math.random() < 0.03) {

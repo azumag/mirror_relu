@@ -6,7 +6,6 @@ interface CalibrationSample {
   jawOpen: number;
   rightIrisPosition: number;
   leftIrisPosition: number;
-  eyeDifference: number;
   eyeDistance: number;
 }
 
@@ -47,7 +46,6 @@ export class CalibrationSession {
         jawOpen: metrics.jawOpen,
         rightIrisPosition: metrics.rightIrisPosition,
         leftIrisPosition: metrics.leftIrisPosition,
-        eyeDifference: metrics.eyeDifference,
         eyeDistance: metrics.eyeDistance,
       });
     }
@@ -67,15 +65,30 @@ export class CalibrationSession {
       throw new Error("キャリブレーションに必要なサンプル数が不足しています。");
     }
 
+    const rightIrisPosition = median(
+      this.samples.map((sample) => sample.rightIrisPosition),
+    );
+    const leftIrisPosition = median(
+      this.samples.map((sample) => sample.leftIrisPosition),
+    );
+    const eyeDifferenceBaseline = median(
+      this.samples.map((sample) =>
+        Math.abs(
+          (sample.rightIrisPosition - rightIrisPosition) -
+            (sample.leftIrisPosition - leftIrisPosition),
+        ),
+      ),
+    );
+
     return {
       version: 1,
       createdAt: now.toISOString(),
       sampleCount: this.samples.length,
       mouthClosedRatio: median(this.samples.map((sample) => sample.mouthClosedRatio)),
       jawOpenBaseline: median(this.samples.map((sample) => sample.jawOpen)),
-      rightIrisPosition: median(this.samples.map((sample) => sample.rightIrisPosition)),
-      leftIrisPosition: median(this.samples.map((sample) => sample.leftIrisPosition)),
-      eyeDifferenceBaseline: median(this.samples.map((sample) => sample.eyeDifference)),
+      rightIrisPosition,
+      leftIrisPosition,
+      eyeDifferenceBaseline,
       eyeDistance: median(this.samples.map((sample) => sample.eyeDistance)),
     };
   }

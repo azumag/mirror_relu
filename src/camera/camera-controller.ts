@@ -3,6 +3,18 @@ export interface CameraDevice {
   label: string;
 }
 
+/**
+ * The renderer only depends on this small camera boundary.  The production
+ * implementation below is backed by Media Capture, while the E2E build uses
+ * a deterministic implementation that never asks the OS for a camera.
+ */
+export interface CameraSource {
+  readonly isRunning: boolean;
+  start(deviceId?: string): Promise<void>;
+  stop(): void;
+  listDevices(): Promise<CameraDevice[]>;
+}
+
 function cameraError(error: unknown): Error {
   if (!(error instanceof DOMException)) {
     return error instanceof Error ? error : new Error(String(error));
@@ -18,7 +30,7 @@ function cameraError(error: unknown): Error {
   return new Error(messages[error.name] ?? error.message);
 }
 
-export class CameraController {
+export class CameraController implements CameraSource {
   private readonly video: HTMLVideoElement;
   private stream: MediaStream | undefined;
 

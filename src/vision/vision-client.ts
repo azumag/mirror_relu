@@ -14,6 +14,19 @@ export interface VisionClientCallbacks {
   onDelegateChanged: (delegate: DelegatePreference) => void;
 }
 
+/**
+ * Stable renderer-side boundary for real and deterministic vision sources.
+ * Keeping this interface small prevents test-only controls from leaking into
+ * the production MediaPipe client.
+ */
+export interface VisionSource {
+  readonly isReady: boolean;
+  readonly isBusy: boolean;
+  initialize(config: VisionClientConfig): Promise<DelegatePreference>;
+  process(video: HTMLVideoElement, timestampMs: number, includeHands: boolean): Promise<boolean>;
+  dispose(): void;
+}
+
 interface WorkerMessage {
   type: string;
   frame?: VisionFrame;
@@ -26,7 +39,7 @@ interface WorkerMessage {
   total?: number;
 }
 
-export class VisionClient {
+export class VisionClient implements VisionSource {
   private readonly worker: Worker;
   private readonly callbacks: VisionClientCallbacks;
   private ready = false;

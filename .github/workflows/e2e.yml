@@ -1,0 +1,86 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  renderer:
+    name: Renderer E2E (Ubuntu)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install browser and build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Renderer E2E
+        run: xvfb-run -a npm run e2e:renderer
+      - name: Upload renderer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-renderer-${{ runner.os }}
+          path: artifacts/e2e/renderer
+          if-no-files-found: ignore
+          retention-days: 7
+
+  native:
+    name: Native Tauri E2E (${{ matrix.os }})
+    needs: renderer
+    if: github.event_name != 'pull_request' || matrix.os == 'ubuntu-24.04'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev webkit2gtk-driver build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev xvfb
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Native Tauri E2E (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run e2e:tauri
+      - name: Native Tauri E2E (non-Linux)
+        if: runner.os != 'Linux'
+        run: npm run e2e:tauri
+      - name: Upload native diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-tauri-${{ runner.os }}
+          path: artifacts/e2e/tauri
+          if-no-files-found: ignore
+          retention-days: 7

@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import { CameraController } from "./camera/camera-controller.js";
+import { CameraController, type CameraSource } from "./camera/camera-controller.js";
 import { BehaviorEngine } from "./core/behavior-engine.js";
 import { CalibrationSession } from "./core/calibration.js";
 import {
@@ -40,7 +40,10 @@ import {
   setMirrorState,
 } from "./ui/render.js";
 import { clearOverlay, drawOverlay } from "./ui/overlay.js";
-import { VisionClient } from "./vision/vision-client.js";
+import { VisionClient, type VisionClientCallbacks, type VisionSource } from "./vision/vision-client.js";
+import type { E2EBridge } from "./e2e/bridge.js";
+
+const E2E_FIXTURES = import.meta.env.VITE_E2E_FIXTURES === "1";
 
 function assetUrl(relativePath: string): string {
   return new URL(`./${relativePath.replace(/^\.\//, "")}`, window.location.href).href.replace(/\/$/, "");
@@ -68,6 +71,9 @@ const toastTitle = required<HTMLElement>("toastTitle");
 const toastMessage = required<HTMLElement>("toastMessage");
 
 let settings: AppSettings = loadSettings();
+// Persist the validated shape so malformed or stale local settings are repaired
+// before any UI interaction can write them back again.
+saveSettings(settings);
 let calibration: CalibrationProfile | undefined = loadCalibration();
 let events = loadEvents();
 let running = false;
@@ -78,15 +84,19 @@ let frameCounter = 0;
 let lastFrameDispatchAt = 0;
 let animationFrameId = 0;
 let pauseTimer: number | undefined;
+let pauseUntilMs: number | undefined;
 let toastTimer: number | undefined;
 let latestEngineResult: EngineResult | undefined;
 let effectiveDelegate = settings.delegate;
+let nowProvider: () => Date = () => new Date();
+let camera: CameraSource;
+let vision: VisionSource;
+let e2eBridge: E2EBridge | undefined;
 
-const camera = new CameraController(video);
-const engine = new BehaviorEngine();
+const engine = new BehaviorEngine(() => nowProvider());
 const calibrationSession = new CalibrationSession(45);
 const alerts = new AlertManager();
-const vision = new VisionClient({
+const visionCallbacks: VisionClientCallbacks = {
   onFrame: handleVisionFrame,
   onState: (message) => setModelState(message, false),
   onError: showError,
@@ -94,7 +104,63 @@ const vision = new VisionClient({
     effectiveDelegate = delegate;
     delegateBadge.textContent = delegate;
   },
-});
+};
+
+async function createRuntime(): Promise<void> {
+  if (!E2E_FIXTURES) {
+    camera = new CameraController(video);
+    vision = new VisionClient(visionCallbacks);
+    return;
+  }
+
+  const { createE2ERuntime } = await import("./e2e/runtime.js");
+  const runtime = createE2ERuntime(video, visionCallbacks);
+  camera = runtime.camera;
+  vision = runtime.vision;
+  e2eBridge = runtime.bridge;
+  nowProvider = () => runtime.clock.now();
+  engine.setClock(nowProvider);
+  e2eBridge.attachApp({
+    getAppState: () => ({
+      running,
+      paused,
+      calibrating,
+      conversationMode,
+      scenario: runtime.vision.getScenario(),
+      modelReady: vision.isReady,
+      cameraRunning: camera.isRunning,
+      lastResult: latestEngineResult ?? null,
+    }),
+    reset: async () => {
+      stopMonitoring();
+      conversationMode = false;
+      conversationModeButton.setAttribute("aria-pressed", "false");
+      conversationOverlay.hidden = true;
+      calibration = undefined;
+      settings = loadSettings();
+      events = loadEvents();
+      renderHistory(events, nowProvider());
+      renderCalibration(calibration);
+      renderIdleDetectors(calibration);
+      onboarding.hidden = false;
+      const consent = required<HTMLInputElement>("onboardingConsent");
+      const start = required<HTMLButtonElement>("onboardingStartButton");
+      consent.checked = false;
+      start.disabled = true;
+    },
+    advanceTime: async () => {
+      if (pauseUntilMs !== undefined && nowProvider().getTime() >= pauseUntilMs) {
+        await resumeFromPause();
+      }
+    },
+  });
+
+  // The native WebDriver plugin is loaded only into the E2E Tauri build. It
+  // is intentionally not imported for the renderer/browser E2E session.
+  if (window.location.protocol.startsWith("tauri") || window.location.hostname.endsWith("tauri.localhost")) {
+    await import("@wdio/tauri-plugin");
+  }
+}
 
 function currentModes(): AppModes {
   return { conversationMode, paused, calibrating };
@@ -170,7 +236,14 @@ async function refreshCameraList(): Promise<void> {
     cameraSelect.append(option);
   }
 
-  if (devices.some((device) => device.deviceId === selected)) cameraSelect.value = selected;
+  if (devices.some((device) => device.deviceId === selected)) {
+    cameraSelect.value = selected;
+  } else if (selected) {
+    // A disconnected camera must not leave an unusable id in persisted state.
+    settings.selectedCameraId = "";
+    saveSettings(settings);
+    cameraSelect.value = "";
+  }
 }
 
 async function startCamera(): Promise<void> {
@@ -212,6 +285,7 @@ async function startMonitoring(): Promise<boolean> {
 function stopMonitoring(): void {
   window.clearTimeout(pauseTimer);
   pauseTimer = undefined;
+  pauseUntilMs = undefined;
   running = false;
   paused = false;
   calibrating = false;
@@ -241,6 +315,7 @@ async function pauseForTenMinutes(): Promise<void> {
   clearOverlay(overlayCanvas);
   updateMonitorControls();
   setModelState("10分休止中", true);
+  pauseUntilMs = nowProvider().getTime() + 10 * 60 * 1000;
   pauseTimer = window.setTimeout(() => void resumeFromPause(), 10 * 60 * 1000);
 }
 
@@ -248,6 +323,7 @@ async function resumeFromPause(): Promise<void> {
   if (!running || !paused) return;
   window.clearTimeout(pauseTimer);
   pauseTimer = undefined;
+  pauseUntilMs = undefined;
 
   try {
     await startCamera();
@@ -307,7 +383,7 @@ function handleVisionFrame(frame: VisionFrame): void {
 
 function handleEvents(incoming: BehaviorEvent[]): void {
   events = appendEvents(events, incoming);
-  renderHistory(events);
+  renderHistory(events, nowProvider());
 
   for (const event of incoming) {
     alerts.notify(event, settings.soundEnabled);
@@ -412,14 +488,18 @@ function bindSettings(): void {
 }
 
 function exportData(): void {
-  const content = exportPayload(events, settings, calibration ?? null);
+  const content = exportPayload(events, settings, calibration ?? null, nowProvider());
   const blob = new Blob([content], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `mirror-relu-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.download = `mirror-relu-${nowProvider().toISOString().slice(0, 10)}.json`;
   anchor.click();
   URL.revokeObjectURL(url);
+
+  if (e2eBridge) {
+    e2eBridge.captureDownload(anchor.download, content, 1);
+  }
 }
 
 function resetSettings(): void {
@@ -479,7 +559,7 @@ function installEventHandlers(): void {
   required<HTMLButtonElement>("clearHistoryButton").addEventListener("click", () => {
     if (!window.confirm("検出履歴をすべて削除しますか？")) return;
     events = clearEvents();
-    renderHistory(events);
+    renderHistory(events, nowProvider());
   });
   required<HTMLButtonElement>("clearCalibrationButton").addEventListener("click", () => {
     if (!calibration || !window.confirm("保存した本人基準を削除しますか？")) return;
@@ -495,16 +575,21 @@ function installEventHandlers(): void {
   });
 }
 
-function initialize(): void {
+async function initialize(): Promise<void> {
+  await createRuntime();
   applySettingsToControls(settings, video, overlayCanvas);
   bindSettings();
   installEventHandlers();
-  renderHistory(events);
+  renderHistory(events, nowProvider());
   renderCalibration(calibration);
   renderIdleDetectors(calibration);
   updateMonitorControls();
   setModelState("停止中", false);
   delegateBadge.textContent = settings.delegate;
+
+  if (E2E_FIXTURES) {
+    await refreshCameraList();
+  }
 
   onboarding.hidden = hasCompletedOnboarding();
   window.addEventListener("beforeunload", () => {
@@ -513,4 +598,4 @@ function initialize(): void {
   });
 }
 
-initialize();
+void initialize();

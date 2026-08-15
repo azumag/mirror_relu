@@ -18,7 +18,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@mediapipe/tasks-vision": "1.0.0"
+    "@mediapipe/tasks-vision": "1.0.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.4",

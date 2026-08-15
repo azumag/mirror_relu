@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: セキュリティ上の問題
+    url: https://github.com/azumag/mirror_relu/security
+    about: 公開Issueに機密情報を書かず、Securityページを利用してください

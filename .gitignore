@@ -1,6 +1,17 @@
 node_modules/
 dist/
-dist-electron/
-release/
+.test-dist/
+target/
+src-tauri/target/
 .DS_Store
 *.log
+.env
+.env.*
+!.env.example
+
+# MediaPipe runtime assets are downloaded from pinned official URLs.
+public/mediapipe/models/*.task
+public/mediapipe/wasm/*
+public/mediapipe/asset-manifest.json
+!public/mediapipe/README.md
+!public/mediapipe/.gitkeep

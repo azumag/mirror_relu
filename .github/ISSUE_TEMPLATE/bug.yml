@@ -1,0 +1,47 @@
+name: 不具合報告
+description: 誤検知、起動、カメラ、通知などの問題を報告します
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 顔画像・映像・個人情報は添付しないでください。セキュリティ問題はSECURITY.mdを参照してください。
+  - type: input
+    id: version
+    attributes:
+      label: アプリ版
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options: [Windows, macOS, Linux]
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 対象
+      options: [起動・カメラ, 口の開き, 顔への手接触, 左右視線差, 通知, 履歴・設定, その他]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待した挙動
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の挙動
+    validations:
+      required: true

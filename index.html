@@ -1,12 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mirror ReLU - Posture Monitor</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101719" />
+  <meta name="description" content="顔まわりの無意識な動作に気づく、ローカル推論のデスクトップミラー" />
+  <title>Mirror Re:lu</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Mirror Re:lu">
+        <div class="brand-mark" aria-hidden="true"><span class="brand-eye brand-eye-left"></span><span class="brand-eye brand-eye-right"></span></div>
+        <div><div class="brand-name">Mirror <span>Re:lu</span></div><div class="brand-subtitle">気づきのための、静かなデスクトップミラー</div></div>
+      </div>
+      <div class="topbar-status" aria-live="polite">
+        <span class="privacy-chip"><span class="privacy-dot"></span>映像は端末内のみ</span>
+        <span id="modelState" class="model-state">停止中</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="conversationModeButton" class="button button-quiet" type="button" aria-pressed="false">○ 会話モード</button>
+        <button id="pauseButton" class="button button-quiet" type="button" disabled>Ⅱ 10分休止</button>
+        <button id="monitorButton" class="button button-primary" type="button"><span class="monitor-indicator"></span><span id="monitorButtonLabel">監視を開始</span></button>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="workspace" aria-label="監視画面">
+        <article class="panel camera-panel">
+          <div class="panel-heading camera-heading">
+            <div><p class="eyebrow">LIVE MIRROR</p><h1>いまの状態</h1></div>
+            <div class="camera-controls">
+              <label class="select-label" for="cameraSelect"><span>カメラ</span><select id="cameraSelect" disabled><option value="">既定のカメラ</option></select></label>
+              <span id="inferenceBadge" class="metric-badge">— ms</span><span id="delegateBadge" class="metric-badge">—</span>
+            </div>
+          </div>
+          <div id="cameraStage" class="camera-stage">
+            <video id="cameraVideo" autoplay muted playsinline></video><canvas id="overlayCanvas" aria-hidden="true"></canvas>
+            <div id="cameraEmptyState" class="camera-empty-state">
+              <div class="empty-orbit" aria-hidden="true"><div class="empty-face"><span></span><span></span></div></div>
+              <h2>カメラはまだ停止しています</h2><p>開始すると、顔と手の特徴を端末内で解析します。</p>
+              <button id="emptyStartButton" class="button button-secondary" type="button">カメラを開始</button>
+            </div>
+            <div class="stage-status"><span id="facePresence" class="stage-pill"><span class="stage-dot"></span>顔を待っています</span><span id="calibrationPresence" class="stage-pill">未校正</span></div>
+            <div id="conversationOverlay" class="conversation-overlay" hidden>会話モード：口の開き通知を一時停止中</div>
+          </div>
+          <div class="camera-footer">
+            <div class="live-metrics" aria-label="リアルタイム指標">
+              <div><span>口の比率</span><strong id="mouthMetric">—</strong></div><div><span>顔接触</span><strong id="touchMetric">—</strong></div>
+              <div><span>左右視線差</span><strong id="eyeMetric">—</strong></div><div><span>正面度</span><strong id="frontalMetric">—</strong></div>
+            </div>
+            <p class="camera-note">数値は本人内での比較用です。医療上の測定値ではありません。</p>
+          </div>
+        </article>
+
+        <section class="detector-grid" aria-label="検出状態">
+          <article class="detector-card" data-detector="mouth" data-state="normal">
+            <div class="detector-card-header"><div class="detector-icon detector-icon-mouth"></div><div><p class="eyebrow">MOUTH</p><h2>口の開き</h2></div><span class="detector-state" data-role="state">待機</span></div>
+            <p class="detector-helper" data-role="helper">監視を開始すると判定します</p><div class="detector-meter"><span data-role="meter"></span></div>
+            <div class="detector-detail"><span>現在 <strong data-role="value">—</strong></span><span>基準 <strong data-role="threshold">—</strong></span></div>
+          </article>
+          <article class="detector-card" data-detector="faceTouch" data-state="normal">
+            <div class="detector-card-header"><div class="detector-icon detector-icon-hand">✦</div><div><p class="eyebrow">FACE TOUCH</p><h2>顔への手接触</h2></div><span class="detector-state" data-role="state">待機</span></div>
+            <p class="detector-helper" data-role="helper">監視を開始すると判定します</p><div class="detector-meter"><span data-role="meter"></span></div>
+            <div class="detector-detail"><span>現在 <strong data-role="value">—</strong></span><span>基準 <strong data-role="threshold">—</strong></span></div>
+          </article>
+          <article class="detector-card" data-detector="eyeAlignment" data-state="normal">
+            <div class="detector-card-header"><div class="detector-icon detector-icon-eyes"><i></i><i></i></div><div><p class="eyebrow">EYE DIFFERENCE / BETA</p><h2>左右視線差</h2></div><span class="detector-state" data-role="state">要校正</span></div>
+            <p class="detector-helper" data-role="helper">正面注視時の個人基準との差を見ます</p><div class="detector-meter"><span data-role="meter"></span></div>
+            <div class="detector-detail"><span>現在 <strong data-role="value">—</strong></span><span>基準 <strong data-role="threshold">—</strong></span></div>
+          </article>
+        </section>
+
+        <article class="panel history-panel">
+          <div class="panel-heading history-heading"><div><p class="eyebrow">AWARENESS LOG</p><h2>気づけた記録</h2></div>
+            <div class="today-counts"><div><strong id="mouthCount">0</strong><span>口</span></div><div><strong id="touchCount">0</strong><span>手</span></div><div><strong id="eyeCount">0</strong><span>目</span></div></div>
+          </div><div id="eventList" class="event-list"></div>
+        </article>
+      </section>
+
+      <aside class="settings-panel" aria-label="検出設定">
+        <div class="settings-heading"><div><p class="eyebrow">ADJUSTMENTS</p><h2>調整</h2></div><button id="resetSettingsButton" class="icon-button" type="button" aria-label="設定を初期化">↺</button></div>
+        <section class="setting-section calibration-card"><div class="setting-section-heading"><div><h3>本人基準</h3><p id="calibrationSummary">未キャリブレーション</p></div><span id="calibrationDot" class="calibration-dot"></span></div><p>自然な閉口と正面注視を約5秒記録します。</p><div class="calibration-actions"><button id="calibrateButton" class="button button-secondary" type="button">キャリブレーション</button><button id="clearCalibrationButton" class="button button-danger-quiet" type="button">削除</button></div></section>
+
+        <section class="setting-section"><div class="setting-section-heading"><div><h3>口の開き</h3><p>会話モード中は自動で休止</p></div><label class="switch"><input id="mouthEnabled" type="checkbox" /><span></span></label></div>
+          <label class="range-row" for="mouthSensitivity"><span>感度</span><output id="mouthSensitivityOutput">58</output><input id="mouthSensitivity" type="range" min="0" max="100" step="1" /></label>
+          <label class="range-row" for="mouthHold"><span>通知まで</span><output id="mouthHoldOutput">1.2秒</output><input id="mouthHold" type="range" min="500" max="3000" step="50" /></label></section>
+
+        <section class="setting-section"><div class="setting-section-heading"><div><h3>顔への手接触</h3><p>触る・こする動きを検出</p></div><label class="switch"><input id="touchEnabled" type="checkbox" /><span></span></label></div>
+          <label class="range-row" for="touchSensitivity"><span>感度</span><output id="touchSensitivityOutput">55</output><input id="touchSensitivity" type="range" min="0" max="100" step="1" /></label>
+          <label class="range-row" for="touchHold"><span>通知まで</span><output id="touchHoldOutput">0.5秒</output><input id="touchHold" type="range" min="200" max="2000" step="50" /></label></section>
+
+        <section class="setting-section setting-section-beta"><div class="setting-section-heading"><div><h3>左右視線差 <span>BETA</span></h3><p>正面・両目可視時のみ</p></div><label class="switch"><input id="eyeEnabled" type="checkbox" /><span></span></label></div>
+          <label class="range-row" for="eyeSensitivity"><span>感度</span><output id="eyeSensitivityOutput">42</output><input id="eyeSensitivity" type="range" min="0" max="100" step="1" /></label>
+          <label class="range-row" for="eyeHold"><span>通知まで</span><output id="eyeHoldOutput">2.2秒</output><input id="eyeHold" type="range" min="1000" max="5000" step="100" /></label>
+          <p class="medical-note">診断・治療機能ではありません。急な眼位変化、複視、痛み、視力変化は眼科へ。</p></section>
+
+        <section class="setting-section compact-settings"><h3>動作</h3>
+          <label class="compact-row" for="processingFps"><span>推論頻度</span><select id="processingFps"><option value="6">省電力 6 fps</option><option value="8">軽量 8 fps</option><option value="10">標準 10 fps</option><option value="12">滑らか 12 fps</option><option value="15">高頻度 15 fps</option></select></label>
+          <label class="compact-row" for="delegateSelect"><span>推論方式</span><select id="delegateSelect"><option value="GPU">GPU優先</option><option value="CPU">CPU</option></select></label>
+          <div class="compact-row"><span>通知音</span><label class="switch"><input id="soundEnabled" type="checkbox" /><span></span></label></div>
+          <div class="compact-row"><span>特徴点表示</span><label class="switch"><input id="overlayEnabled" type="checkbox" /><span></span></label></div>
+          <div class="compact-row"><span>鏡像表示</span><label class="switch"><input id="mirrorVideo" type="checkbox" /><span></span></label></div>
+        </section>
+
+        <section class="setting-section data-actions"><h3>ローカルデータ</h3><div class="data-buttons"><button id="exportButton" class="button button-quiet" type="button">JSONを書き出す</button><button id="clearHistoryButton" class="button button-danger-quiet" type="button">履歴を削除</button></div><p>画像や動画は保存しません。日時・種類・継続時間・指標だけを保存します。</p></section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="onboarding" class="modal-backdrop" hidden><section class="modal onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+    <div class="modal-brand-mark" aria-hidden="true"><span></span><span></span></div><p class="eyebrow">WELCOME TO MIRROR RE:LU</p><h2 id="onboardingTitle">自分を責めずに、ただ気づく。</h2>
+    <p class="modal-lead">Webカメラを鏡として表示し、無意識な動作が続いたときだけ静かに知らせます。</p>
+    <div class="onboarding-points"><article><strong>端末内で処理</strong><span>映像は保存・送信しません。</span></article><article><strong>単発では通知しない</strong><span>一定時間続いた動作だけを知らせます。</span></article><article><strong>医療機器ではない</strong><span>診断・治療・矯正効果を目的としません。</span></article></div>
+    <label class="consent-row"><input id="onboardingConsent" type="checkbox" /><span>上記を理解し、カメラの利用を開始します</span></label><button id="onboardingStartButton" class="button button-primary button-full" type="button" disabled>同意して開始</button>
+  </section></div>
+
+  <div id="calibrationModal" class="modal-backdrop" hidden><section class="modal calibration-modal" role="dialog" aria-modal="true" aria-labelledby="calibrationTitle">
+    <div class="calibration-target" aria-hidden="true"><span></span></div><p class="eyebrow">CALIBRATION</p><h2 id="calibrationTitle">レンズの近くを自然に見てください</h2><p>口を閉じ、顔から手を離し、頭をまっすぐにします。</p>
+    <div class="calibration-progress"><span id="calibrationProgressBar"></span></div><strong id="calibrationProgressText">準備中…</strong><p id="calibrationHint" class="calibration-hint">顔を確認しています</p><button id="cancelCalibrationButton" class="button button-quiet" type="button">中止</button>
+  </section></div>
+
+  <div id="errorBanner" class="error-banner" role="alert" hidden><span id="errorMessage"></span><button id="dismissErrorButton" type="button" aria-label="閉じる">×</button></div>
+  <div id="toast" class="toast" role="status" aria-live="assertive" hidden><strong id="toastTitle"></strong><span id="toastMessage"></span></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

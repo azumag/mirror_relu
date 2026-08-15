@@ -41,6 +41,7 @@ test("十分なサンプルの中央値から本人基準を作る", () => {
   equal(profile.createdAt, "2026-08-16T00:00:00.000Z");
   ok(Math.abs(profile.mouthClosedRatio - 0.0345) < 0.0001);
   ok(Math.abs(profile.rightIrisPosition - 0.4845) < 0.0001);
+  ok(Math.abs(profile.eyeDifferenceBaseline - 0.005) < 0.0001);
 });
 
 test("不足した状態では完了できない", () => {

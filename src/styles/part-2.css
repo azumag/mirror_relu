@@ -1,0 +1,365 @@
+.panel,
+.detector-card,
+.setting-section {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(24, 35, 38, 0.93), rgba(17, 25, 28, 0.93));
+  box-shadow: var(--shadow);
+}
+
+.panel {
+  border-radius: 16px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-heading h1,
+.panel-heading h2,
+.settings-heading h2,
+.setting-section h3,
+.detector-card h2 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.panel-heading h1 {
+  font-size: 19px;
+}
+
+.panel-heading h2,
+.settings-heading h2 {
+  font-size: 17px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--faint);
+  font-size: 10px;
+}
+
+select {
+  min-height: 30px;
+  padding: 4px 28px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #141d20;
+  font-size: 11px;
+}
+
+.camera-stage {
+  position: relative;
+  min-height: 360px;
+  aspect-ratio: 16 / 8.4;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(circle at center, #182326 0, #0c1113 75%);
+  background-size: 44px 44px, 44px 44px, auto;
+}
+
+.camera-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.35);
+}
+
+#cameraVideo,
+#overlayCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#cameraVideo {
+  background: #090d0e;
+}
+
+#overlayCanvas {
+  z-index: 2;
+  pointer-events: none;
+}
+
+#cameraVideo.mirrored,
+#overlayCanvas.mirrored {
+  transform: scaleX(-1);
+}
+
+.camera-empty-state {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  text-align: center;
+  background: rgba(10, 15, 17, 0.52);
+  backdrop-filter: blur(3px);
+}
+
+.camera-empty-state[hidden] {
+  display: none;
+}
+
+.empty-orbit {
+  width: 78px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(121, 215, 198, 0.19);
+  border-radius: 50%;
+  background: rgba(121, 215, 198, 0.04);
+  box-shadow: 0 0 50px rgba(121, 215, 198, 0.08);
+}
+
+.empty-face {
+  position: relative;
+  width: 42px;
+  height: 52px;
+  border: 1px solid rgba(121, 215, 198, 0.42);
+  border-radius: 48% 48% 52% 52%;
+}
+
+.empty-face::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 13px;
+  height: 5px;
+  border-bottom: 1px solid var(--mint);
+  border-radius: 0 0 50% 50%;
+  transform: translateX(-50%);
+}
+
+.empty-face span {
+  position: absolute;
+  top: 18px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--mint);
+}
+
+.empty-face span:first-child {
+  left: 10px;
+}
+
+.empty-face span:last-child {
+  right: 10px;
+}
+
+.camera-empty-state h2 {
+  margin: 17px 0 7px;
+  font-size: 16px;
+}
+
+.camera-empty-state p {
+  max-width: 390px;
+  margin: 0 0 17px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.stage-status {
+  position: absolute;
+  z-index: 4;
+  top: 13px;
+  left: 13px;
+  display: flex;
+  gap: 7px;
+}
+
+.stage-pill {
+  min-height: 26px;
+  color: rgba(238, 246, 243, 0.72);
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(7, 11, 12, 0.66);
+  backdrop-filter: blur(10px);
+}
+
+.stage-pill[data-present="false"] .stage-dot {
+  background: var(--faint);
+  box-shadow: none;
+}
+
+#calibrationPresence[data-calibrated="true"] {
+  color: var(--mint-strong);
+}
+
+.conversation-overlay {
+  position: absolute;
+  z-index: 4;
+  right: 13px;
+  bottom: 13px;
+  padding: 8px 11px;
+  border: 1px solid rgba(240, 201, 106, 0.24);
+  border-radius: 9px;
+  color: #f7dc98;
+  background: rgba(59, 49, 20, 0.74);
+  backdrop-filter: blur(9px);
+  font-size: 11px;
+}
+
+.camera-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.live-metrics {
+  display: flex;
+  gap: 22px;
+}
+
+.live-metrics div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.live-metrics span,
+.camera-note {
+  color: var(--faint);
+  font-size: 9px;
+}
+
+.live-metrics strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.camera-note {
+  margin: 0;
+  text-align: right;
+}
+
+.detector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detector-card {
+  position: relative;
+  min-height: 162px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 14px;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.detector-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -30px -40px auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(121, 215, 198, 0.055), transparent 70%);
+  pointer-events: none;
+}
+
+.detector-card[data-state="candidate"] {
+  border-color: rgba(240, 201, 106, 0.31);
+  background: linear-gradient(145deg, rgba(46, 42, 26, 0.93), rgba(22, 27, 28, 0.93));
+}
+
+.detector-card[data-state="active"] {
+  border-color: rgba(255, 143, 143, 0.48);
+  background: linear-gradient(145deg, rgba(52, 30, 31, 0.96), rgba(25, 25, 27, 0.94));
+  transform: translateY(-1px);
+}
+
+.detector-card[data-state="cooldown"] {
+  border-color: rgba(142, 185, 255, 0.22);
+}
+
+.detector-card[data-disabled="true"] {
+  opacity: 0.58;
+}
+
+.detector-card-header {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.detector-card h2 {
+  font-size: 13px;
+}
+
+.detector-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--mint);
+  background: rgba(121, 215, 198, 0.045);
+}
+
+.detector-icon-mouth::before {
+  content: "";
+  width: 17px;
+  height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.detector-icon-hand {
+  font-size: 17px;
+}
+
+.detector-icon-eyes {
+  display: flex;
+  gap: 3px;
+}
+
+.detector-icon-eyes i {
+  width: 9px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}

@@ -1,0 +1,31 @@
+name: 改善提案
+description: 新しい検出、UI、誤検知対策などを提案します
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したい問題
+      description: 機能名ではなく、現在どこで困るかを記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: 設計上の境界
+      options:
+        - label: 映像を保存・送信しない方針を維持できる
+          required: true
+        - label: 医療診断を行わない方針を理解している
+          required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 完了条件

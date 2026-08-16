@@ -9,8 +9,9 @@ describe("Native Tauri smoke", () => {
   it("アプリとメインウィンドウが起動し、初回案内を表示する", async () => {
     await expect($("body")).toBeDisplayed();
     await expect($("#onboarding")).toBeDisplayed();
-    const state = await bridgeCall<{ ready: boolean }>("getAppState");
-    expect(state.ready).toBe(true);
+    const state = await bridgeCall<{ running: boolean; scenario: string }>("getAppState");
+    expect(state.running).toBe(false);
+    expect(state.scenario).toBe("neutral");
   });
 
   it("Tauri WebView上で合成シナリオを操作できる", async () => {

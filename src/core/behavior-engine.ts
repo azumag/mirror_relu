@@ -115,6 +115,15 @@ export class BehaviorEngine {
   private readonly touchGate = new TemporalGate();
   private readonly eyeGate = new TemporalGate();
   private contactHistory: ContactSample[] = [];
+  private now: () => Date;
+
+  constructor(now: () => Date = () => new Date()) {
+    this.now = now;
+  }
+
+  setClock(now: () => Date): void {
+    this.now = now;
+  }
 
   reset(): void {
     this.mouthGate.reset();
@@ -276,7 +285,7 @@ export class BehaviorEngine {
     return {
       id: eventId(),
       behavior,
-      occurredAt: new Date().toISOString(),
+      occurredAt: this.now().toISOString(),
       confidence: detector.confidence,
       durationMs: detector.activeDurationMs,
       label: detector.label,

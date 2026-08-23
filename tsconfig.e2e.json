@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.test.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node", "mocha", "@wdio/globals/types"],
+    "noEmit": true
+  },
+  "include": ["e2e/**/*.ts", "src/core/**/*.ts", "src/e2e/**/*.ts", "src/camera/**/*.ts", "src/vision/vision-client.ts"]
+}

@@ -96,8 +96,8 @@ export function renderIdleDetectors(calibration?: CalibrationProfile): void {
   required<HTMLElement>("frontalMetric").textContent = "—";
 }
 
-export function renderHistory(events: BehaviorEvent[]): void {
-  const counts = countToday(events);
+export function renderHistory(events: BehaviorEvent[], now = new Date()): void {
+  const counts = countToday(events, now);
   required<HTMLElement>("mouthCount").textContent = String(counts.mouth);
   required<HTMLElement>("touchCount").textContent = String(counts.faceTouch);
   required<HTMLElement>("eyeCount").textContent = String(counts.eyeAlignment);

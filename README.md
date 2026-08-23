@@ -96,6 +96,16 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 手動確認項目は [docs/manual-test.md](./docs/manual-test.md) にまとめています。
 
+E2Eテストは [docs/e2e-testing.md](./docs/e2e-testing.md) を参照してください。Renderer E2EはChrome上で合成カメラを使い、Native Tauri E2Eはembedded WebDriverで実際のTauriウィンドウを起動します。
+
+```bash
+npm ci
+npm run e2e:renderer
+npm run e2e:tauri
+```
+
+実カメラ、OS権限、MediaPipeの認識精度は [docs/manual-e2e-hardware.md](./docs/manual-e2e-hardware.md) の手順で確認します。
+
 ## 現在の制約
 
 - 左右視線差はWebカメラの解像度、照明、眼鏡の反射、顔角度に大きく影響されます。

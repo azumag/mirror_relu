@@ -15,4 +15,17 @@ run(npmBin, ["run", "check"]);
 run(process.platform === "win32" ? "node_modules/.bin/vite.cmd" : "./node_modules/.bin/vite", ["build"], {
   VITE_E2E_FIXTURES: "1",
 });
-run(npmBin, ["exec", "tauri", "--", "build", "--config", "src-tauri/tauri.e2e.conf.json", "--features", "e2e"]);
+const tauriArgs = [
+  "build",
+  "--config",
+  "src-tauri/tauri.e2e.conf.json",
+  "--features",
+  "e2e",
+];
+
+// E2E launches the raw executable; installers are not needed and the macOS
+// DMG bundler can fail in sandboxed/headless environments. Tauri CLI rejects
+// an empty --bundles value, so only pass it when a platform bundle is wanted.
+if (process.platform === "darwin") tauriArgs.push("--bundles", "app");
+
+run(npmBin, ["exec", "tauri", "--", ...tauriArgs]);

@@ -34,7 +34,7 @@ jobs:
         run: xvfb-run -a npm run e2e:renderer
       - name: Upload renderer diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-renderer-${{ runner.os }}
           path: artifacts/e2e/renderer
@@ -66,7 +66,7 @@ jobs:
         run: xvfb-run -a npm run e2e:tauri
       - name: Upload native diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-tauri-${{ runner.os }}
           path: artifacts/e2e/tauri
@@ -99,7 +99,7 @@ jobs:
         run: npm run e2e:tauri
       - name: Upload native diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-tauri-${{ runner.os }}
           path: artifacts/e2e/tauri

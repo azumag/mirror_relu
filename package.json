@@ -31,7 +31,7 @@
     "@swc/core": "1.16.1",
     "@tauri-apps/cli": "2.11.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.4",
     "@wdio/browser-runner": "9.31.2",
     "@wdio/cli": "^9.31.2",
     "@wdio/globals": "^9.31.1",
